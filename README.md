@@ -17,11 +17,11 @@ graph TD
     subgraph "LAB Ortamı (Docker)"
 
         subgraph "Veri Kaynakları"
-            SimSwitches[Simüle Edilmiş L2 Switch'ler<br/>(snmpd konteynerları)]
+            SimSwitches["Simüle Edilmiş L2 Switch'ler<br/>(snmpd konteynerları)"]
         end
 
         subgraph "Uzman Servisler"
-            Discovery[Keşif Servisi (Go)]
+            Discovery["Keşif Servisi (Go)"]
             SNMP_Exporter[SNMP Exporter]
         end
 
@@ -41,17 +41,17 @@ graph TD
     end
 
     %% Veri Akışları
-    Discovery -- "1. IP'leri bulur ve yazar" --> TargetsFile
+    Discovery -- "1.IP'leri bulur ve yazar" --> TargetsFile
 
-    TargetsFile -- "2. Hedef listesi olarak okunur<br/>(file_sd_config)" --> Leaf_Proms
+    TargetsFile -- "2.Hedef listesi olarak okunur<br/>(file_sd_config)" --> Leaf_Proms
 
-    Leaf_Proms -- "3. SNMP sorgusu için yönlendirir<br/>(relabeling)" --> SNMP_Exporter
+    Leaf_Proms -- "3.SNMP sorgusu için yönlendirir<br/>(relabeling)" --> SNMP_Exporter
 
-    SNMP_Exporter -- "4. Gerçek SNMP sorgusunu atar" --> SimSwitches
+    SNMP_Exporter -- "4.Gerçek SNMP sorgusunu atar" --> SimSwitches
 
-    Leaf_Proms -- "5. Özet verileri çeker<br/>(/federate)" --> Global_Prom
+    Leaf_Proms -- "5.Özet verileri çeker<br/>(/federate)" --> Global_Prom
 
-    Global_Prom -- "6. Veri kaynağı olur" --> Grafana
+    Global_Prom -- "6.Veri kaynağı olur" --> Grafana
 ```
 
 # Proje Dizin Yapısı
