@@ -12,6 +12,48 @@ Tüm altyapıyı kendi bilgisayarında `Docker` ve `docker-compose` kullanarak s
 - **Prometheus Federasyonu:** 5 adet "Leaf" ve 1 adet "Global" olmak üzere toplam 6 Prometheus konteyneri.
 - **Grafana:** Verileri görselleştirmek için.
 
+```mermaid
+graph TD
+    subgraph "LAB Ortamı (Docker)"
+
+        subgraph "Veri Kaynakları"
+            SimSwitches[Simüle Edilmiş L2 Switch'ler<br/>(snmpd konteynerları)]
+        end
+
+        subgraph "Uzman Servisler"
+            Discovery[Keşif Servisi (Go)]
+            SNMP_Exporter[SNMP Exporter]
+        end
+
+        subgraph "Veri Dosyası (Paylaşılan Volume)"
+            TargetsFile([tüm_switchler.json])
+        end
+
+        subgraph "Prometheus Federasyonu"
+            Leaf_Proms("5x Leaf Prometheus<br/>(leaf-a, leaf-b, ...)")
+            Global_Prom[(Global Prometheus)]
+        end
+
+        subgraph "Sunum Katmanı"
+            Grafana[/Grafana/]
+        end
+
+    end
+
+    %% Veri Akışları
+    Discovery -- "1. IP'leri bulur ve yazar" --> TargetsFile
+
+    TargetsFile -- "2. Hedef listesi olarak okunur<br/>(file_sd_config)" --> Leaf_Proms
+
+    Leaf_Proms -- "3. SNMP sorgusu için yönlendirir<br/>(relabeling)" --> SNMP_Exporter
+
+    SNMP_Exporter -- "4. Gerçek SNMP sorgusunu atar" --> SimSwitches
+
+    Leaf_Proms -- "5. Özet verileri çeker<br/>(/federate)" --> Global_Prom
+
+    Global_Prom -- "6. Veri kaynağı olur" --> Grafana
+```
+
 # Proje Dizin Yapısı
 
 İşe başlamadan önce, projenin klasör yapısını aşağıdaki gibi oluştur. Tüm konfigürasyon dosyalarını doğru yerlere koymak çok önemli.
