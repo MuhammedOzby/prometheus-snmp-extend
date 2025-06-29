@@ -1,0 +1,89 @@
+! DIST-SW1
+! --------------------------------------------------
+hostname DIST-SW1
+! Router
+interface Gi0/0
+  desc R1-OUTER
+  switchport trunk encapsulation dot1q 
+  switchport mode trunk
+! Dist
+interface range Gi3/0-1
+  desc DIST-SW2
+  channel-group 1 mode active
+! A line
+interface range Gi1/0-1
+  desc Area-A-Side
+  channel-group 10 mode active
+! B line
+interface range Gi1/2-3
+  desc Area-B-Side
+  channel-group 12 mode active
+! EtherChannels
+interface port-channel 1
+  desc DIST-Side
+  switchport trunk encapsulation dot1q 
+  switchport mode trunk
+interface port-channel 10
+  desc Line-A
+  switchport trunk encapsulation dot1q 
+  switchport mode trunk
+interface port-channel 12
+  desc Line-B
+  switchport trunk encapsulation dot1q 
+  switchport mode trunk
+vlan 10
+  name IT-AREA
+vlan 20
+  name PERSON-AREA
+vlan 100
+  name MANAGEMENT
+spanning-tree mode rapid-pvst
+spanning-tree vlan 10,20,100 root primary
+spanning-tree portfast default
+spanning-tree loopguard default
+spanning-tree portfast bpduguard default
+! --------------------------------------------------
+! DIST-SW2
+! --------------------------------------------------
+hostname DIST-SW2
+! Router
+interface Gi0/0
+  desc R2-OUTER
+  switchport trunk encapsulation dot1q 
+  switchport mode trunk
+! Dist
+interface range Gi3/0-1
+  desc DIST-SW1
+  channel-group 1 mode passive
+! A line
+interface range Gi1/0-1
+  desc Area-C-Side
+  channel-group 10 mode active
+! B line
+interface range Gi1/2-3
+  desc Area-D-Side
+  channel-group 12 mode active
+! EtherChannels
+interface port-channel 1
+  desc DIST-Side
+  switchport trunk encapsulation dot1q 
+  switchport mode trunk
+interface port-channel 10
+  desc Line-A
+  switchport trunk encapsulation dot1q 
+  switchport mode trunk
+interface port-channel 12
+  desc Line-B
+  switchport trunk encapsulation dot1q 
+  switchport mode trunk
+vlan 10
+  name IT-AREA
+vlan 20
+  name PERSON-AREA
+vlan 100
+  name MANAGEMENT
+spanning-tree mode rapid-pvst
+spanning-tree vlan 10,20,100 root secondary
+spanning-tree portfast default
+spanning-tree loopguard default
+spanning-tree portfast bpduguard default
