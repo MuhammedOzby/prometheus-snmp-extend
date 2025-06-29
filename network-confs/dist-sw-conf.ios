@@ -42,6 +42,11 @@ spanning-tree vlan 10,20,100 root primary
 spanning-tree portfast default
 spanning-tree loopguard default
 spanning-tree portfast bpduguard default
+! Dist has DIST = ...100.100, DIST-SW1 = ...100.101, DIST-SW2 = ...100.102
+interface vlan 100
+  ip address 192.168.100.101 255.255.255.0
+  no shutdown
+ip default-gateway 192.168.100.1
 ! --------------------------------------------------
 ! DIST-SW2
 ! --------------------------------------------------
@@ -87,3 +92,8 @@ spanning-tree vlan 10,20,100 root secondary
 spanning-tree portfast default
 spanning-tree loopguard default
 spanning-tree portfast bpduguard default
+! Dist has DIST = ...100.100, DIST-SW1 = ...100.101, DIST-SW2 = ...100.102
+interface vlan 100
+  ip address 192.168.100.102 255.255.255.0
+  no shutdown
+ip default-gateway 192.168.100.1

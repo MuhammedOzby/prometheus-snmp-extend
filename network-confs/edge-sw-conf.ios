@@ -1,0 +1,32 @@
+! Edge SW conf Example
+hostname {{.HOSTNAME}}
+no ip domain-lookup
+! LEFT-SIDE
+interface range Gi3/2-3
+  desc LEFT-Side
+  channel-group 1 mode passive
+! RIGHT-SIDE
+interface range Gi3/0-1
+  desc RIGHT-Side
+  channel-group 2 mode active
+interface port-channel 1
+  desc LEFT-Side
+  switchport trunk encapsulation dot1q 
+  switchport mode trunk
+interface port-channel 2
+  desc RIGHT-Side
+  switchport trunk encapsulation dot1q 
+  switchport mode trunk
+vlan 10
+  name IT-AREA
+vlan 20
+  name PERSON-AREA
+vlan 100
+  name MANAGEMENT
+spanning-tree mode rapid-pvst
+interface vlan 100
+  ! Side has A = 10, B = 20, C = 30, D = 40
+  ! Example: A0 = ...100.10, A1 = ...100.11, B0 = ...100.20, B1 = ...100.21, C0 = ...100.30, C1 = ...100.31, D0 = ...100.40, D1 = ...100.41
+  ip address {{.IP_ADDRESS}} 255.255.255.0
+  no shutdown
+ip default-gateway 192.168.100.1
