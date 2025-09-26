@@ -1,189 +1,177 @@
-# Federasyonlu Prometheus ve Uzman Servislerle L2 Gözlemci LAB Projesi
+Bu proje kodu ve ek bilgiler doğrultusunda, kapsamlı bir `README.md` dosyası aşağıda Türkçe olarak oluşturulmuştur:
 
-Bu proje, daha önce teorik olarak tasarlanmış federasyonlu ve Go tabanlı uzman servislere dayalı gözlemci mimarisinin çalışan bir prototipini oluşturmak için tasarlanmış bir LAB projesidir. Temel amacı, ağ cihazlarından (simüle edilmiş L2 switch'ler) SNMP verilerini toplamak, özel Go servisi ile hedef keşfi yapmak ve toplanan metrikleri federasyonlu bir Prometheus kurulumu aracılığıyla Grafana'da görselleştirmektir. Tüm altyapı, hızlı ve izole bir ortam sağlamak için Docker ve Docker Compose kullanılarak simüle edilmiştir.
+---
+
+# Prometheus SNMP Exporter ile Federasyonlu Ağ Gözlemleme LAB Ortamı
+
+Bu proje, teorik olarak tasarlanmış federasyonlu ve uzman Go servislerine dayalı gözlemci mimarisinin çalışan bir laboratuvar ortamı prototipini oluşturmayı amaçlamaktadır. Ağ cihazlarından SNMP verilerini toplamak, bu verileri merkezi olarak birleştirmek ve görselleştirmek için Go ile geliştirilmiş bir keşif servisi, Prometheus federasyonu, Prometheus SNMP Exporter ve Grafana gibi modern gözlemleme araçlarını bir araya getirir.
 
 ## Özellikler
 
-*   **Simüle Edilmiş LAB Ortamı:** Docker ve Docker Compose kullanılarak esnek ve kolayca yeniden oluşturulabilir bir ağ izleme LAB ortamı.
-*   **Dinamik Keşif Servisi:** Go dilinde yazılmış, ağdaki simüle edilmiş L2 switch'lerin IP adreslerini otomatik olarak keşfeden ve Prometheus için uygun JSON hedef dosyaları (`tüm_switchler.json`) üreten bir servis. Bu sayede manuel hedef yapılandırma ihtiyacı ortadan kalkar.
-*   **SNMP Metrik Toplama:** Standart Prometheus `snmp_exporter` kullanılarak L2 switch'lerden SNMP verileri toplanır (örneğin, `ifOperStatus` gibi arayüz operasyonel durumları).
-*   **Prometheus Federasyonu:** 5 adet "Leaf" (Yaprak) Prometheus sunucusu (bölgelere göre metrik toplar) ve 1 adet "Global" (Küresel) Prometheus sunucusundan (tüm leaf'lerden özet verileri çeker) oluşan ölçeklenebilir bir izleme mimarisi.
-*   **Veri Görselleştirme:** Toplanan tüm SNMP metrikleri, Grafana panoları aracılığıyla zengin görselleştirmelerle sunulur.
-*   **Ağ Cihazı Yapılandırma Otomasyonu (Opsiyonel):** GNS3 gibi bir ağ simülasyon aracı üzerinde çalışan Cisco IOS tabanlı anahtarları, Telnet üzerinden otomatik olarak yapılandıran Go tabanlı bir yardımcı araç.
+*   **Ağ Cihazı Simülasyonu:** Docker konteynerleri üzerinde çalışan `snmpd` ile temel L2 switch'ler simüle edilir.
+*   **Dinamik Keşif Servisi (Go):** Ağdaki hedef IP adreslerini (simüle edilmiş switch'ler) otomatik olarak keşfeder ve Prometheus tarafından okunabilir bir JSON dosyasına (`tüm_switchler.json`) kaydeder. Bu servis, belirli aralıklarla çalışacak şekilde yapılandırılmıştır.
+*   **Prometheus SNMP Exporter Entegrasyonu:** Standart Prometheus `snmp_exporter` kullanılarak ağ cihazlarından SNMP metrikleri toplanır.
+*   **Prometheus Federasyonu:**
+    *   5 adet "Leaf" (Yaprak) Prometheus sunucusu, bölgesel bazda veri toplama ve ön işleme yapar.
+    *   1 adet "Global" Prometheus sunucusu, tüm Leaf Prometheus'lardan özet verileri çeker ve merkezi bir görünüm sunar.
+*   **Grafana ile Görselleştirme:** Toplanan tüm metrikler, kapsamlı panolar ve uyarılar için Grafana üzerinde görselleştirilebilir.
+*   **Docker ve Docker Compose ile Yönetim:** Tüm LAB ortamı bileşenleri (Prometheus instanceleri, SNMP Exporter, Keşif Servisi, Grafana, simüle edilmiş switch'ler), Docker Compose kullanılarak kolayca dağıtılır ve yönetilir.
+*   **Ağ Cihazı Konfigürasyon Aracı (Opsiyonel):** GNS3 ortamında gerçek veya sanal Cisco ağ cihazlarının (DIST-SW'ler ve SW-X0/X1/X2/X3/X4 gibi Edge switch'ler) temel IP ve VLAN/EtherChannel konfigürasyonunu otomatik olarak yapmak için Go ile yazılmış bir yardımcı araç.
 
 ## Teknoloji Yığını
 
-*   **Orkestrasyon:** Docker, Docker Compose
-*   **Programlama Dilleri:** Go (Golang)
-*   **İzleme ve Gözlemleme:** Prometheus (Federasyon), Grafana, SNMP Exporter
-*   **Veri Formatları:** YAML (Yapılandırma dosyaları için), JSON (Hedef keşif dosyaları için)
-*   **Ağ Simülasyonu:** GNS3 (Ağ cihazı yapılandırma araçları için, dolaylı), Cisco IOS (Anahtar konfigürasyonları)
-*   **Ağ Protokolleri:** SNMP (Veri toplama), Telnet (Ağ cihazı yapılandırma aracı için)
-*   **Şablonlama:** Go `html/template` (Ağ cihazı yapılandırma şablonları için)
+*   **Programlama Dilleri:** Go (Keşif Servisi ve Ağ Konfigürasyon Aracı için)
+*   **Konteynerleştirme:** Docker, Docker Compose
+*   **Gözlemleme:** Prometheus (Sunucular ve SNMP Exporter), Grafana
+*   **Ağ Simülasyonu:** `snmpd` (Docker imajı)
+*   **Ağ Cihazı Yönetimi:** Cisco IOS (konfigürasyon şablonları), Telnet (Go aracı ile otomasyon)
+*   **Veri Formatları:** JSON, YAML
+*   **Diagram Araçları:** Mermaid (geliştirme sürecinde mimari görselleştirme için)
 
 ## Kurulum
 
-Bu proje, ana izleme altyapısını Docker üzerinde çalıştırmaktadır. Ayrıca, GNS3 üzerinde simüle edilen ağ cihazlarını yapılandırmak için ayrı bir Go aracı bulunmaktadır.
-
 ### Ön Koşullar
 
-*   [**Docker**](https://docs.docker.com/get-docker/) ve [**Docker Compose**](https://docs.docker.com/compose/install/) yüklü olmalıdır.
-*   **Go 1.19+** (GNS3 üzerindeki anahtarları yapılandırmak için `network-confs/edge-configurator` aracını kullanmayı planlıyorsanız gereklidir.)
-*   **GNS3** (Ağ cihazlarını simüle etmek ve `network-confs/sw-list.json` dosyasını oluşturmak için gereklidir, bu projenin doğrudan bir parçası değildir ancak LAB kurulumunun bir parçasıdır.)
-*   Linux cihazınızda `virbr0` arayüzü üzerinden 192.168.122.0/24 ağına statik bir route eklemeniz gerekebilir (GNS3 NAT ayarları için):
+Bu projeyi yerel makinenizde çalıştırmak için aşağıdaki yazılımların kurulu olması gerekmektedir:
+
+*   **Docker Engine:** `v20.10+` veya üzeri önerilir.
+*   **Docker Compose:** `v2.0+` veya üzeri önerilir.
+*   **Go:** `v1.19+` veya üzeri önerilir (Ağ Konfigürasyon Aracı için).
+*   **Git:** Proje kodunu klonlamak için.
+*   **(Opsiyonel) GNS3:** Gerçek veya sanal Cisco anahtarlarını yapılandırmak istiyorsanız.
+
+### Kodu İndirme
+
+Proje kodunu yerel makinenize indirmek için aşağıdaki Git komutunu kullanın:
+
+```bash
+git clone <repository_url>
+cd l2-observer-lab
+```
+> `<repository_url>` yerine projenin Git deposu adresini yazın.
+
+### Bağımlılıkları Yükleme
+
+*   **Ana LAB Ortamı (Docker Compose ile):** Tüm gerekli Docker imajları (`prom/snmp-exporter`, `prom/prometheus`, `grafana/grafana`, `roenvan/snmpd`) `docker-compose up -d --build` komutu ile otomatik olarak indirilecek veya Go Keşif Servisi için derlenecektir. Manuel bir bağımlılık yüklemesi gerekmez.
+*   **Edge Konfigürasyon Aracı (Opsiyonel):** Eğer `network-confs/edge-configurator.go` aracını kullanacaksanız, `network-confs` dizinine gidin ve Go modüllerini indirin:
     ```bash
-    sudo ip route add 10.0.0.0/24 via 192.168.122.1 dev virbr0
+    cd network-confs
+    go mod tidy
     ```
-
-### Kodu Alma
-
-Proje dosyalarını yerel makinenize indirin:
-
-```bash
-git clone <repo_url_buraya> # Klonlamak için uygun URL'yi kullanın
-cd l2-observer-lab # Klonlanan dizinin adı bu değilse uygun şekilde değiştirin
-```
-
-### Bağımlılıkları Yükleme ve Projeyi Oluşturma
-
-Docker Compose, tüm servis bağımlılıklarını yöneteceğinden, ana proje için ek bir bağımlılık yükleme adımı gerekmez. `docker-compose up -d --build` komutu Go servisini otomatik olarak derleyecektir.
-
-`network-confs/edge-configurator.go` aracını kullanmak isterseniz, bu aracı ayrıca derlemeniz gerekmektedir:
-
-```bash
-cd network-confs
-go mod tidy # Eğer go.mod dosyası varsa bağımlılıkları indirir
-go build -o edge-configurator edge-configurator.go
-cd ..
-```
 
 ## Yapılandırma
 
-Projenin temel yapılandırmaları `docker-compose.yml` dosyası ve ilgili servislerin yapılandırma dizinlerinde (`snmp-exporter/`, `prometheus/`) yer almaktadır. `discovery/targets/tüm_switchler.json` dosyası, `discovery-service` tarafından otomatik olarak oluşturulur ve manuel müdahale gerektirmez.
+Bu proje, ana `README.md` dosyasında açıklandığı gibi belirli yapılandırma dosyaları içerir.
 
-*   **`snmp-exporter/snmp.yml`:** SNMP metriklerinin nasıl toplanacağını tanımlayan yapılandırma dosyasıdır. Varsayılan olarak temel `if_mib` ayakta kalma durumu kontrolü için yapılandırılmıştır.
-*   **`prometheus/leaf-a/prometheus.yml` (ve diğer `leaf-b`, `leaf-c`, `leaf-d`, `leaf-e` Prometheus sunucuları):** Her bir Prometheus leaf örneğinin hedef keşif (file_sd_config kullanarak) ve SNMP Exporter'a yönlendirme (`relabel_configs`) ayarlarını içerir. `prometheus_bolge` etiketi, ilgili leaf'in hangi veri merkezine veya bölgeye ait hedefleri izleyeceğini belirler.
-*   **`prometheus/global/prometheus.yml`:** Tüm leaf Prometheus sunucularından `/federate` endpoint'i aracılığıyla özetlenmiş metrikleri çeken ana (global) Prometheus örneğinin yapılandırmasıdır.
-*   **`discovery/main.go`:** Simüle edilmiş switch IP adreslerini ve ilgili bölgelerini (örneğin "A_Veri_Merkezi") tanımlayan ve bu bilgileri Prometheus'un okuyacağı `targets/tüm_switchler.json` dosyasına yazan Go kodunu içerir. Bu servis, belirlenen aralıklarla hedef dosyasını günceller.
-*   **Ağ Cihazı Konfigürasyonları (`network-confs/` dizini - Opsiyonel):**
-    *   `dist-sw-conf.ios` ve `router-conf.ios`: GNS3 ortamındaki dağıtım anahtarları ve yönlendiriciler için Cisco IOS benzeri temel yapılandırma dosyalarıdır.
-    *   `edge-sw-conf.ios`: Kenar anahtarları için Go `html/template` ile dinamik IP adresi ve hostname atamaları yapılmasını sağlayan yapılandırma şablonudur.
-    *   `sw-list.json`: `edge-configurator` aracı tarafından okunan, GNS3'teki anahtar düğümlerinin konsol portu ve hostname bilgilerini içeren JSON dosyasıdır. Bu dosya genellikle GNS3 projesinden dışa aktarılır.
+*   **Keşif Servisi (`discovery/main.go`):**
+    *   Simüle edilen switch'lerin IP adresleri (`172.20.0.10`, `172.20.0.11`, `172.20.0.20`, `172.20.0.30`) ve bunlara atanan bölgeler (`A_Veri_Merkezi`, `B_Veri_Merkezi`, `C_Veri_Merkezi`) `main.go` dosyası içinde tanımlanmıştır. Bu değerleri ihtiyaca göre güncelleyebilirsiniz.
+    *   Servis, keşfettiği hedefleri `discovery/targets/tüm_switchler.json` dosyasına otomatik olarak yazacaktır. Bu dosya, Prometheus Leaf sunucuları tarafından hedef listesi olarak okunur.
+
+*   **SNMP Exporter (`snmp-exporter/snmp.yml`):**
+    *   Bu dosya, SNMP Exporter'ın hangi MIB'leri kullanarak metrik toplayacağını tanımlar. Varsayılan olarak `if_mib` (arayüz durumları) konfigüre edilmiştir. Özelleştirmek için bu dosyayı düzenleyebilirsiniz.
+
+*   **Prometheus Yapılandırmaları (`prometheus/` dizini):**
+    *   **Leaf Prometheus (`prometheus/leaf-a/prometheus.yml` vb.):** Her bir Leaf Prometheus yapılandırması, `prometheus_bolge` etiketi ile kendi bölgesini belirtir ve `relabel_configs` kullanarak sadece bu bölgeye ait hedefleri (`tüm_switchler.json` dosyasından) toplar. Ayrıca, hedefleri SNMP Exporter'a (`snmp-exporter:9116`) yönlendirme kurallarını içerir. Diğer Leaf'ler için `prometheus_bolge` ve `regex` değerlerini kendi bölgelerine göre kopyalayıp düzenlemeniz gerekmektedir (örneğin, `leaf-b` için `B_Veri_Merkezi`).
+    *   **Global Prometheus (`prometheus/global/prometheus.yml`):** Bu yapılandırma, tüm Leaf Prometheus sunucularından `/federate` endpoint'i aracılığıyla metrikleri çeker. `match[]` parametresi ile hangi metriklerin çekileceği belirtilmiştir (`{job="snmp-switchler"}`).
+
+*   **Docker Compose (`docker-compose.yml`):**
+    *   Tüm servislerin (discovery-service, snmp-exporter, simüle edilmiş switch'ler, leaf-a/b/c/d/e, global-prometheus, grafana) tanımlarını, ağ ayarlarını, volume bağlamalarını ve port eşleştirmelerini içerir.
+    *   `lab_net` adlı özel bir bridge ağı tanımlanmıştır (`172.20.0.0/16` alt ağı ile).
+
+*   **Ağ Cihazı Konfigürasyon Şablonları (`network-confs/` dizini - Opsiyonel):**
+    *   `dist-sw-conf.ios`, `edge-sw-conf.ios`, `router-conf.ios`: GNS3'teki Cisco anahtar ve router'ları için IOS konfigürasyon şablonlarıdır. `edge-sw-conf.ios` dosyasında Go şablon sentaksı (`{{.HOSTNAME}}`, `{{.IP_ADDRESS}}`) kullanılarak dinamik değerler atanır.
+    *   `sw-list.json`: GNS3 projenizdeki switch ve router'ların konsol portları gibi bilgilerini içeren bir JSON dosyasıdır. `edge-configurator.go` aracı bu dosyayı kullanarak cihazlara bağlanır.
 
 ## Kullanım
 
 ### LAB Ortamını Başlatma
 
-Projenin kök dizininde aşağıdaki komutu çalıştırarak tüm Docker konteynerlerini (Keşif Servisi, SNMP Exporter, Prometheus sunucuları ve Grafana) oluşturup başlatabilirsiniz:
+Proje ana dizininde (`l2-observer-lab/`) aşağıdaki komutu çalıştırarak tüm Docker servislerini arka planda başlatın:
 
 ```bash
 docker-compose up -d --build
 ```
+`--build` parametresi, Go keşif servisi için Docker imajını yeniden derler.
 
-Bu komut, servisleri arka planda (`-d` parametresi ile daemon modunda) çalıştırır ve gerekli derleme işlemlerini (`--build` parametresi ile, özellikle Go servisi için) yapar.
+### Doğrulama Adımları
 
-### Erişim Adresleri
+Tüm servisler başladıktan sonra, ortamın düzgün çalıştığını doğrulamak için aşağıdaki adımları uygulayın:
 
-Servisler başlatıldıktan sonra aşağıdaki adreslerden erişebilirsiniz:
+1.  **Keşif Dosyasını Kontrol Etme:**
+    *   `discovery/targets/tüm_switchler.json` dosyasının oluştuğunu ve içinde simüle edilmiş switch'lerin IP adreslerinin ve bölgelerinin (`A_Veri_Merkezi`, `B_Veri_Merkezi` vb.) listelendiğini kontrol edin.
 
-*   **Global Prometheus:** `http://localhost:9090`
-*   **Grafana:** `http://localhost:3000` (Varsayılan kullanıcı adı/şifre: `admin`/`admin`)
-*   **Leaf Prometheus Sunucuları:** `docker ps` komutunu kullanarak veya `docker-compose logs` ile ilgili Prometheus servislerinin maruz bıraktığı portları bulabilirsiniz. Örneğin, `leaf-a` için `http://localhost:XXXX`.
+2.  **Leaf Prometheus Sunucularını Kontrol Etme:**
+    *   `docker-compose ps` komutunu çalıştırarak `leaf-a` servisinin dışarıya açılan portunu bulun (örneğin `0.0.0.0:XXXX->9090/tcp`).
+    *   Tarayıcınızda `http://localhost:XXXX` adresini (bulduğunuz portu kullanarak) açın.
+    *   "Status" -> "Targets" menüsüne gidin. Burada sadece `A_Veri_Merkezi` bölgesine ait IP adreslerini (örneğin `172.20.0.10`, `172.20.0.11`) görmelisiniz.
 
-### Doğrulama
+3.  **Global Prometheus Sunucusunu Kontrol Etme:**
+    *   Tarayıcınızda `http://localhost:9090` adresini açın.
+    *   "Status" -> "Targets" menüsüne gidin. Burada tüm Leaf Prometheus sunucularını (`leaf-a:9090`, `leaf-b:9090` vb.) hedeflendiğini görmelisiniz.
 
-1.  **Hedef Dosyası Kontrolü:** `discovery/targets/tüm_switchler.json` dosyasının başarıyla oluşturulduğunu ve güncellendiğini kontrol edin.
-2.  **Global Prometheus Hedefleri:** `http://localhost:9090` adresindeki Global Prometheus arayüzünde "Status" -> "Targets" menüsüne gidin. Burada `leaf-a:9090`, `leaf-b:9090` gibi tüm "Leaf Prometheus" sunucularının `federate` işi altında aktif olduğunu görmelisiniz.
-3.  **Leaf Prometheus Hedefleri:** Her bir "Leaf Prometheus" sunucusunun (örneğin, tarayıcınızda `leaf-a`'nın portunu bulun) "Status" -> "Targets" menüsünde kendi bölgesine ait simüle edilmiş L2 switch IP adreslerini ve `snmp-exporter:9116` hedefini görmelisiniz.
-4.  **Grafana Entegrasyonu:** `http://localhost:3000` adresinden Grafana'ya giriş yapın. Yeni bir Prometheus veri kaynağı ekleyin ve URL olarak `http://global-prometheus:9090` adresini kullanın. `up` gibi basit bir PromQL sorgusu çalıştırarak metriklerin başarıyla geldiğini kontrol edin.
+4.  **Grafana'yı Kontrol Etme:**
+    *   Tarayıcınızda `http://localhost:3000` adresini açın.
+    *   Varsayılan kullanıcı adı/şifre `admin/admin` ile giriş yapın. Şifrenizi değiştirmeniz istenebilir.
+    *   Yeni bir Prometheus veri kaynağı ekleyin:
+        *   **Name:** `Global Prometheus`
+        *   **URL:** `http://global-prometheus:9090` (Bu URL Docker ağı içindeki servis adı ve portudur)
+        *   Save & Test yapın. Bağlantının başarılı olduğunu doğrulayın.
+    *   Ardından, `Explore` (Keşfet) veya yeni bir pano oluşturarak `up` gibi temel bir Prometheus sorgusu ile verilerin geldiğini kontrol edin.
 
-### Ağ Cihazı Yapılandırma Aracını Çalıştırma (Opsiyonel)
+### Ağ Cihazı Konfigürasyon Aracı Kullanımı (Opsiyonel)
 
-Eğer GNS3 ortamında simüle edilmiş Cisco anahtarlarını yapılandırmak isterseniz:
+Bu araç, bir GNS3 ortamında çalışan gerçek veya sanal Cisco anahtarlarını otomatik olarak yapılandırmak için kullanılır.
 
-1.  GNS3 projenizin çalıştığından ve yapılandırmak istediğiniz anahtarların Telnet portlarının erişilebilir olduğundan emin olun.
-2.  `network-confs` dizinine gidin:
+1.  **GNS3 Projenizi Başlatın:** GNS3'ü açın ve `prom-snmp-exporter` projesindeki tüm ağ cihazlarını (`DIST-SW1`, `DIST-SW2`, `SW-A0` vb.) başlatın.
+2.  **`sw-list.json` Dosyasını Güncelleyin:** GNS3 projenizin dışa aktarılmış `sw-list.json` dosyasını `network-confs/sw-list.json` konumuna kopyalayın. Bu dosya, GNS3'teki cihazların telnet konsol portlarını içerir.
+3.  **Routerlara Statik Yönlendirme Ekleyin:** Linux cihazınızda aşağıdaki komutu çalıştırın. Bu, Docker ortamı ile GNS3 arasındaki iletişimi sağlar.
+    ```bash
+    sudo ip route add 10.0.0.0/24 via 192.168.122.1 dev virbr0
+    ```
+4.  **Konfigürasyon Aracını Çalıştırın:** `network-confs` dizinine gidin ve aracı çalıştırın:
     ```bash
     cd network-confs
+    go run edge-configurator.go
     ```
-3.  Aracı çalıştırın:
-    ```bash
-    ./edge-configurator # veya go run edge-configurator.go
-    ```
-    Bu araç, `sw-list.json` dosyasını okuyacak ve her bir anahtara Telnet üzerinden otomatik olarak `edge-sw-conf.ios` şablonundaki yapılandırmaları uygulayacaktır.
+    Bu araç, `sw-list.json` dosyasındaki telnet konsol portlarını kullanarak SW-X0/X1/X2/X3/X4 formatındaki cihazlara otomatik olarak `edge-sw-conf.ios` şablonunu uygulayacaktır. Komut çıktısını takip ederek konfigürasyon sürecini görebilirsiniz. DIST-SW'ler için `dist-sw-conf.ios` ve Router'lar için `router-conf.ios` dosyalarını manuel olarak uygulamanız gerekebilir.
 
-## Servis Olarak Çalıştırma / Dağıtım
+## Servis Olarak Çalıştırma
 
-Bu proje bir Docker Compose uygulaması olduğundan, servis olarak çalıştırmak için Docker'ın kendi mekanizmalarını kullanmak en uygun ve önerilen yöntemdir.
+Bu proje, bir sunucu ortamında kalıcı olarak çalıştırılmak üzere Docker Compose ile dağıtılmaya uygun bir yapıya sahiptir.
 
-*   **Daemon Olarak Başlatma:**
-    Projenin kök dizininde aşağıdaki komutu kullanarak tüm servisleri arka planda (daemon modunda) başlatabilirsiniz:
-
+*   **Servisleri Başlatma (Arka Planda):**
     ```bash
     docker-compose up -d
     ```
-
-*   **Servis Durumunu Kontrol Etme:**
-    Çalışan Docker konteynerlarının durumunu kontrol etmek için:
-
-    ```bash
-    docker-compose ps
-    ```
-    Tüm servislerin loglarını gerçek zamanlı olarak takip etmek için:
-    ```bash
-    docker-compose logs -f
-    ```
-
-*   **Servisleri Durdurma ve Yeniden Başlatma:**
-    Tüm servisleri durdurmak için:
-    ```bash
-    docker-compose stop
-    ```
-    Tüm servisleri durdurup tekrar başlatmak için:
-    ```bash
-    docker-compose restart
-    ```
-    Tüm servisleri durdurup konteynerları ve ağları kaldırmak için:
+*   **Tüm Servisleri Durdurma:**
     ```bash
     docker-compose down
     ```
-
-*   **Genel Arka Uç Go Servisi Çalıştırma (Eğer Docker Dışında Çalıştırılacaksa):**
-    Eğer `discovery-service` gibi bir Go servisini Docker konteyneri dışında, doğrudan bir Linux sunucusunda uzun süre çalışan bir servis olarak çalıştırmanız gerekirse, `systemd` kullanabilirsiniz. Aşağıda temel bir `.service` dosyası şablonu verilmiştir:
-
-    Örneğin, `discovery-service` için `/etc/systemd/system/discovery-service.service` adında bir dosya oluşturun:
-
-    ```ini
-    [Unit]
-    Description=Go Discovery Service for SNMP Targets
-    After=network.target
-
-    [Service]
-    ExecStart=/usr/local/bin/discovery-service # Servis uygulamasının tam yolu
-    WorkingDirectory=/opt/l2-observer-lab/discovery # Uygulamanın çalışacağı dizin
-    Restart=always
-    User=your_user # Uygulamayı çalıştıracak kullanıcı adınızı buraya yazın
-    Group=your_group # Uygulamayı çalıştıracak grup adınızı buraya yazın
-    Environment="PATH=/usr/local/bin:/usr/bin:/bin" # Uygulama için gerekli ortam değişkenleri
-
-    [Install]
-    WantedBy=multi-user.target
+*   **Servisleri Yeniden Başlatma:**
+    ```bash
+    docker-compose restart
     ```
-
-    `discovery-service` uygulamasını `/usr/local/bin/` dizinine kopyaladığınızdan ve `WorkingDirectory` yolunu projenizin doğru dizinine (`discovery/` içindeki `targets/` klasörüne yazabilmesi için) ayarladığınızdan emin olun.
-
-    **Yönetim Komutları:**
-    *   Servisi başlatma: `sudo systemctl start discovery-service`
-    *   Sistem başlangıcında otomatik başlatmayı etkinleştirme: `sudo systemctl enable discovery-service`
-    *   Servis durumunu kontrol etme: `sudo systemctl status discovery-service`
-    *   Servisi durdurma: `sudo systemctl stop discovery-service`
-    *   Servisi yeniden başlatma: `sudo systemctl restart discovery-service`
-    *   Servis loglarını görüntüleme: `journalctl -u discovery-service -f`
+*   **Servislerin Durumunu Görüntüleme:**
+    ```bash
+    docker-compose ps
+    ```
+*   **Servis Loglarını Görüntüleme:**
+    Belirli bir servisin çıktılarını takip etmek için:
+    ```bash
+    docker-compose logs -f <servis_adı>
+    # Örneğin: docker-compose logs -f discovery-service
+    # Tüm servislerin loglarını görmek için: docker-compose logs -f
+    ```
 
 ## API Referansı
 
-Bu proje, kendi özel bir web API'sini harici olarak sunmamaktadır. Prometheus, Grafana ve SNMP Exporter gibi entegre bileşenlerin her birinin kendi API'leri ve web arayüzleri mevcuttur; ancak bu projenin özel kodu (Go keşif servisi veya ağ yapılandırma aracı) bir HTTP API endpoint'i sağlamaz.
+Bu proje, harici bir RESTful API sunmamaktadır. Temel bileşenler aşağıdaki gibi çalışır:
+
+*   **Prometheus:** Metrikleri standart Prometheus scraping mekanizmaları aracılığıyla `/metrics` endpoint'inde sunar (örneğin, `http://localhost:9090/metrics` veya `http://snmp-exporter:9116/metrics`).
+*   **SNMP Exporter:** SNMP metriklerini, belirtilen hedeflerden toplayarak kendi `/metrics` endpoint'inde Prometheus'a sunar.
+*   **Keşif Servisi:** Ağ cihazı hedeflerini dahili olarak bir JSON dosyasına (`discovery/targets/tüm_switchler.json`) yazar ve bu dosya Prometheus tarafından okunur. Harici bir HTTP API sağlamaz.
 
 ## Lisans
 
-Bu proje `LICENSE` dosyasında belirtilen [MIT Lisansı](LICENSE) altında lisanslanmıştır.
+Bu proje **MIT Lisansı** altında lisanslanmıştır. Daha fazla bilgi için `LICENSE` dosyasına bakınız.
+---
